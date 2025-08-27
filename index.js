@@ -10,18 +10,20 @@ const storage = multer.diskStorage({
         cb(null, 'files/');
     },
     filename: (req, file, cb) => {
-        console.log(file);
-        cb(null, 'abhishek-ki-file' + Date.now() + '-'.file.originalname);
+        cb(null, 'abhishek-ki-file' + Date.now() + '-' + file.originalname);
     }
 })
 
 const upload = multer({ storage });
+
 app.get('/', (req, res) => {
     return res.render('Form');
 });
 
-app.post('/upload-file', (req, res) => {
 
+app.post('/upload-file', upload.single("profile"), (req, res) => {
+    console.log(req.file);
+    res.send("File uploaded successfully!");
 });
 
 app.listen(8080, (err) => {
