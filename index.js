@@ -1,14 +1,27 @@
 const express = require('express');
-const app = express()
+const app = express();
+const multer = require('multer');
+
 
 app.set('view engine', 'ejs');
 
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'files/');
+    },
+    filename: (req, file, cb) => {
+        console.log(file);
+        cb(null, 'abhishek-ki-file' + Date.now() + '-'.file.originalname);
+    }
+})
+
+const upload = multer({ storage });
 app.get('/', (req, res) => {
     return res.render('Form');
 });
 
 app.post('/upload-file', (req, res) => {
-    console.log(req);
+
 });
 
 app.listen(8080, (err) => {
