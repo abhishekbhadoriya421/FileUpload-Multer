@@ -11,7 +11,7 @@ app.set('view engine', 'ejs');
  */
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const folderPath = path.join(__dirname + '/upload');
+        const folderPath = path.join(__dirname + '/uploads');
         // if folder does not exist then create the folder
         if (!fs.existsSync(folderPath)) {
             fs.mkdir(folderPath, { resursive: true }, (err) => {
@@ -28,8 +28,28 @@ const storage = multer.diskStorage({
     }
 })
 
-const upload = multer({ storage });
 
+/**
+ * Validate File
+ */
+
+const fileFilter = (req, file, cb) => {
+    if (req.url === '/upload-file' && file.fieldname === 'profile') {
+        const fileExtension = path.extname(file.originalname);
+        if (fileExtension === '.jpg' || fileExtension === '.png' || fileExtension === '.jpeg') {
+            cb(null, true);
+        } else {
+            cb("Invalid File Uploaded", false);
+        }
+    } else {
+        cb(null, true);
+    }
+}
+
+const upload = multer({ storage, fileFilter });
+/**
+ * Upload Single File Only
+ */
 app.get('/', (req, res) => {
     return res.status(200).redirect('/single-file');
 })
@@ -38,13 +58,19 @@ app.get('/single-file', (req, res) => {
 });
 
 app.post('/upload-file', upload.single("profile"), (req, res) => {
-    console.log(req.file);
     res.send("File uploaded successfully!");
 });
 
+/**
+ * Upload Multiple files with same name type
+ */
+app.post('/upload-file-with-name', upload.array("profile", 5), (req, res) => {
+    res.send("File uploaded successfully!");
+});
 
-
-
+/**
+ * Upload Multiple Files With Different Name 
+ */
 app.get('/upload-multi-form', (req, res) => {
     return res.render('multi-form');
 });
@@ -63,7 +89,19 @@ app.post('/upload-file-multi',
     }
 );
 
-
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        // Handle Multer errors
+        if (err.code === "LIMIT_UNEXPECTED_FILE") {
+            return res.status(400).send("Too many files uploaded for one field!");
+        }
+        return res.status(400).send(err.message);
+    } else if (err) {
+        // Other errors
+        return res.status(500).send(err);
+    }
+    next();
+});
 
 app.listen(8080, (err) => {
     if (!err) {
